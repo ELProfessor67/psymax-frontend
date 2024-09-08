@@ -1,5 +1,5 @@
 import { CONNECT_TRANSPORT, CONSUME, CONSUME_RESUME, CREATE_WEBRTC_TRANSPORT, GET_PRODUCERS, JOIN_ROOM, MUTE_UNMUTE, NEW_PARTCIPANT_JOIN, NEW_PRODUCER, PARTICIPANTS_DISCONNECT, PRODUCE_TRANSPORT, TRANSPORT_RECV_CONNECT } from '@/constant/events';
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { io, Socket } from "socket.io-client";
 import * as mediasoupClient from 'mediasoup-client';
 import { ClientToServerEvents, IProducerData, ServerToClientEvents } from '@/types/socket';
@@ -37,7 +37,10 @@ let params = {
   }
 }
 
-const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicMute:Boolean) => {
+
+
+
+const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicMute:Boolean,videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur:Boolean) => {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [, forceRender] = useState(false);
 
@@ -59,6 +62,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
   const isMicMuteRef = useRef<Boolean>(false);
   const isWebCamMuteRef = useRef<Boolean>(false);
   const socketIdRef = useRef<null | string>(null);
+  const usermediaRef = useRef<UserMediaService | null>(null)
 
 
 
@@ -70,6 +74,15 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
   useEffect(() => {
     isWebCamMuteRef.current = isWebCamMute;
   },[isWebCamMute])
+
+
+  // on blur change
+  useEffect(() => {
+   
+    if(usermediaRef.current?.segmenter){
+      usermediaRef.current?.blurBackground(usermediaRef.current.segmenter, isBlur ? 10 : 0)
+    }
+  },[isBlur])
 
 
 
@@ -297,8 +310,9 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
         
 
         //get user media
-        const mediaServiceRef = new UserMediaService();
+        const mediaServiceRef = new UserMediaService(videoCanvasRef,canvasRef,isBlur);
         const userMedia = await mediaServiceRef.getUserMedia();
+        usermediaRef.current = mediaServiceRef;
 
         videoTrackRef.current = userMedia[0];
         audioTrackRef.current = userMedia[1];

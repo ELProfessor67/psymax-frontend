@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tensorflow-models/body-segmentation": "^1.0.2",
+    "@tensorflow/tfjs-backend-webgl": "^4.21.0",
+    "@tensorflow/tfjs-core": "^4.21.0",
     "mediasoup-client": "^3.7.16",
     "next": "14.2.8",
     "react": "^18",

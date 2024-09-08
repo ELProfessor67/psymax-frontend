@@ -20,10 +20,13 @@ const room_id = "testing"
 const username = "zeeshan raza"
 
 const page = () => {
+    const videoCanvasRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isMicMute,setIsMicMute] = useState(true);
     const [isWebCamMute,setIsWebCamMute] = useState(true);
+    const [isBlur, setIsBlur] = useState(true);
     const { audioPermisson, cameraPermisson } = useCheckPermission();
-    const {handleJoin,participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute} = useSocket(room_id,username,isWebCamMute,isMicMute);
+    const {handleJoin,participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute} = useSocket(room_id,username,isWebCamMute,isMicMute,videoCanvasRef,canvasRef,isBlur);
     const handleJoinCallRef = useRef(false);
 
    
@@ -62,6 +65,10 @@ const page = () => {
     return (
         <section className='section '>
             {/* sessions  */}
+            <video ref={videoCanvasRef} style={{ display: "none" }}></video>
+            <canvas ref={canvasRef} width={640} height={480} style={{display: "none"}}></canvas>
+            
+
             <div className='h-[90vh] overflow-y-auto flex flex-wrap justify-center py-2 md:gap-4'>
                 {
                     participantsRef.current && participantsRef.current.length > 0 && participantsRef.current.map((participant:ParticipantService) => (
@@ -93,8 +100,8 @@ const page = () => {
 
 
 
-                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative'>
-                        <TbScreenShare />
+                    <button className={`p-2 text-2xl rounded-full ${isBlur  ? 'bg-green-600' : 'bg-gray-200'}  text-black relative`} onClick={() => setIsBlur(prev => !prev)}>
+                      <TbScreenShare />
                     </button>
                     <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative'>
                         <IoSettingsOutline />
