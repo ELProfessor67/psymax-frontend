@@ -14,6 +14,10 @@ export interface IAudioRef {
   [key: string]: HTMLAudioElement
 }
 
+export interface IVideoTraks {
+  [key: string]: MediaStreamTrack
+}
+
 let params = {
   encodings: [
     {
@@ -63,6 +67,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
   const isWebCamMuteRef = useRef<Boolean>(false);
   const socketIdRef = useRef<null | string>(null);
   const usermediaRef = useRef<UserMediaService | null>(null)
+  const remoteVideoTracksRef = useRef<IVideoTraks>({});
 
 
 
@@ -141,12 +146,18 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
           participantRef.audioTrack = track;
           if(audiosElementRef.current[socketId]){
             audiosElementRef.current[socketId].srcObject = new MediaStream([track])
-            audiosElementRef.current[socketId].play();
+            audiosElementRef.current[socketId].play().catch(error => {
+              console.error('Error attempting to play the media:', error);
+            });
           }
         } else {
           participantRef.videoTrack = track;
+          remoteVideoTracksRef.current[socketId] = track;
           if(videosElementsRef.current[socketId]){
             videosElementsRef.current[socketId].srcObject = new MediaStream([track])
+            videosElementsRef.current[socketId].play().catch(error => {
+              console.error('Error attempting to play the media:', error);
+            });
           }
         }
       }
@@ -213,6 +224,25 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
       })
     }, [])
 
+
+    const ProduceTrack = useCallback(async (type:string,producererRef:MutableRefObject<null | mediasoupClient.types.Producer>,paramsRef: MutableRefObject<null | any>) => {
+      try {
+        if (producerTransportRef.current) {
+          producererRef.current = await producerTransportRef.current.produce(paramsRef.current);
+        }
+
+        producererRef.current?.on('trackended', () => {
+          console.log('audio track ended')
+        })
+
+        producererRef.current?.on('transportclose', () => {
+          console.log('audio transport ended')
+        })
+      } catch (error) {
+        console.log('Error:',(error as Error).message)
+      }
+    },[producerTransportRef.current])
+
     const createSendTransport = useCallback(() => {
       socketRef.current?.emit(CREATE_WEBRTC_TRANSPORT, { consumer: false }, async ({ params }) => {
         if (params.error) {
@@ -253,34 +283,44 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
 
               callback({ id });
               console.log(producersExist, 'producersExist')
-              if (producersExist) getProducers()
+              //if (producersExist) getProducers()
             })
           } catch (error) {
             errback(error as Error)
           }
         })
 
-        if (producerTransportRef.current) {
-          console.log(audioParamsRef.current, videoParamsRef.current, 'params')
-          audioProducerRef.current = await producerTransportRef.current.produce(audioParamsRef.current);
-          videoProducerRef.current = await producerTransportRef.current.produce(videoParamsRef.current);
+        if(videoTrackRef.current){
+          ProduceTrack('video',videoProducerRef,videoParamsRef);
         }
 
-        audioProducerRef.current?.on('trackended', () => {
-          console.log('audio track ended')
-        })
+        if(audioTrackRef.current){
+          ProduceTrack('audio',audioProducerRef,audioParamsRef);
+        }
 
-        audioProducerRef.current?.on('transportclose', () => {
-          console.log('audio transport ended')
-        })
+        
 
-        videoProducerRef.current?.on('trackended', () => {
-          console.log('video track ended')
-        })
+        // if (producerTransportRef.current) {
+        //   console.log(audioParamsRef.current, videoParamsRef.current, 'params')
+        //   audioProducerRef.current = await producerTransportRef.current.produce(audioParamsRef.current);
+        //   videoProducerRef.current = await producerTransportRef.current.produce(videoParamsRef.current);
+        // }
 
-        videoProducerRef.current?.on('transportclose', () => {
-          console.log('video transport ended')
-        })
+        // audioProducerRef.current?.on('trackended', () => {
+        //   console.log('audio track ended')
+        // })
+
+        // audioProducerRef.current?.on('transportclose', () => {
+        //   console.log('audio transport ended')
+        // })
+
+        // videoProducerRef.current?.on('trackended', () => {
+        //   console.log('video track ended')
+        // })
+
+        // videoProducerRef.current?.on('transportclose', () => {
+        //   console.log('video transport ended')
+        // })
 
       })
     }, [])
@@ -345,17 +385,29 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
         });
 
         createSendTransport();
+        getProducers();
         forceRender((prev) => !prev);
 
       });
     }, [socketRef.current,isMicMuteRef.current,isWebCamMuteRef.current]);
 
 
-    const handleMuteUnmute = useCallback((value:Boolean,type: 'mic' | 'cam') => {
+    const handleMuteUnmute = useCallback(async (value:Boolean,type: 'mic' | 'cam') => {
       const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketIdRef.current);
       if(participant){
         if(type == 'mic'){
+          
           participant.isMicMute = value;
+
+          //producer audio
+          if(!audioTrackRef.current){
+            audioTrackRef.current = await usermediaRef.current?.getAudioTrack() as MediaStreamTrack | null;
+
+            if(audioTrackRef.current){
+              audioParamsRef.current = { track: audioTrackRef.current };
+              ProduceTrack('audio',audioProducerRef,audioParamsRef);
+            }
+          }
 
           if(value && audioTrackRef.current){
             audioTrackRef.current.enabled = false;
@@ -365,6 +417,16 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
 
         }else{
           participant.isWebCamMute = value;
+
+           //producer audio
+           if(!videoTrackRef.current){
+            videoTrackRef.current = await usermediaRef.current?.getVideoTrack() as MediaStreamTrack | null;
+
+            if(videoTrackRef.current){
+              videoParamsRef.current = { track: videoTrackRef.current, ...params };
+              ProduceTrack('video',videoProducerRef,videoParamsRef);
+            }
+          }
 
           if(value && videoTrackRef.current){
             videoTrackRef.current.enabled = false;
@@ -437,7 +499,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
     }, []);
 
     return (
-      { handleJoin, participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute}
+      { handleJoin, participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute,remoteVideoTracksRef}
     )
   }
 
