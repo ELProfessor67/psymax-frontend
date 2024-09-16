@@ -129,7 +129,7 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
                         participantsRef.current && participantsRef.current.length > 0 && participantsRef.current[selected] &&
                         <div className='w-full h-full flex items-center justify-center' key={participantsRef.current[selected].socketId}>
                             <div className={`${participantsRef.current[selected].isWebCamMute == true ? 'block': 'hidden'}`}>
-                                <h1 className='text-2xl font-semibold'>{participantsRef.current[selected].name} {participantsRef.current[selected].socketId == socketIdRef.current && "(You)"}</h1>
+                                <h1 className='text-2xl font-semibold'>{participantsRef.current[selected].socketId == socketIdRef.current && "Hello!"} {participantsRef.current[selected].name}</h1>
                             </div>
                             <div className={`${participantsRef.current[selected].isWebCamMute == false ? 'block': 'hidden'}`}>
                                <video ref={selectedVideoRef} autoPlay> </video>
@@ -140,7 +140,7 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
                 <div className='h-[90vh] overflow-y-auto flex flex-wrap justify-center py-2 md:gap-4 p-4 w-[30vw]'>
                     {
                         participantsRef.current && participantsRef.current.length > 0 && participantsRef.current.map((participant: ParticipantService, index: number) => (
-                            <RenderParticipants key={participant.socketId} onClick={() => setSelected(index)} {...participant} videosElementsRef={videosElementsRef} audiosElementRef={audiosElementRef} socketIdRef={socketIdRef} videoTrackRef={videoTrackRef} />
+                            <RenderParticipants key={participant.socketId} onClick={() => setSelected(index)} {...participant} videosElementsRef={videosElementsRef} audiosElementRef={audiosElementRef} socketIdRef={socketIdRef} videoTrackRef={videoTrackRef} index={index} selected={selected}/>
                         ))
                     }
 

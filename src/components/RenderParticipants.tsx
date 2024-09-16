@@ -14,9 +14,11 @@ interface IProps {
     isMicMute: Boolean
     isWebCamMute: Boolean
     onClick: () => void;
+    index: number;
+    selected: number;
 }
 
-const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,isMicMute,isWebCamMute,onClick}) => {
+const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,isMicMute,isWebCamMute,onClick,index,selected}) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -43,7 +45,7 @@ const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosEl
   },[socketId,socketIdRef.current,videoTrackRef.current])
 
   return (
-    <div className='max-w-[18rem] h-[15rem] md:w-[30rem] md:h-[20rem] bg-gray-50 shadow-xl rounded-md flex items-center justify-center' onClick={onClick}>
+    <div className={`max-w-[18rem] h-[15rem] md:w-[30rem] md:h-[20rem] bg-gray-50 shadow-xl rounded-md flex items-center justify-center ${selected == index ? 'hidden' : 'block'}`} onClick={onClick}>
       <div className=''>
 {/*         
          <div className={`${isWebCamMute == false ? 'block': 'hidden'}`}>
@@ -51,7 +53,7 @@ const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosEl
         </div>
 
         <h1 className={`text-2xl font-semibold ${isWebCamMute == true ? 'block': 'hidden'}`}>{name} {socketId == socketIdRef.current && "(You)"}</h1> */}
-        <h1 className={`text-2xl font-semibold`}>{name} {socketId == socketIdRef.current && "(You)"}</h1>
+        <h1 className={`text-2xl font-semibold`}>{name}</h1>
         <audio ref={setAudioRefs} autoPlay></audio>
       </div>
     </div>
