@@ -123,13 +123,13 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
             <canvas ref={canvasRef} width={640} height={480} style={{ display: "none" }}></canvas>
 
             <div className='flex'>
-                <div className='w-[70vw] relative'>
+                <div className='w-[70vw] relative mx-auto h-[90vh]'>
                     {
 
                         participantsRef.current && participantsRef.current.length > 0 && participantsRef.current[selected] &&
                         <div className='w-full h-full flex items-center justify-center' key={participantsRef.current[selected].socketId}>
                             <div className={`${participantsRef.current[selected].isWebCamMute == true ? 'block': 'hidden'}`}>
-                                <h1 className='text-2xl font-semibold'>{participantsRef.current[selected].socketId == socketIdRef.current && "Hello!"} {participantsRef.current[selected].name}</h1>
+                                <h1 className='text-4xl font-semibold'>{participantsRef.current[selected].socketId == socketIdRef.current && "Hello!"} {participantsRef.current[selected].name}</h1>
                             </div>
                             <div className={`${participantsRef.current[selected].isWebCamMute == false ? 'block': 'hidden'}`}>
                                <video ref={selectedVideoRef} autoPlay> </video>
@@ -137,14 +137,17 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
                         </div>
                     }
                 </div>
-                <div className='h-[90vh] overflow-y-auto flex flex-wrap justify-center py-2 md:gap-4 p-4 w-[30vw]'>
-                    {
-                        participantsRef.current && participantsRef.current.length > 0 && participantsRef.current.map((participant: ParticipantService, index: number) => (
-                            <RenderParticipants key={participant.socketId} onClick={() => setSelected(index)} {...participant} videosElementsRef={videosElementsRef} audiosElementRef={audiosElementRef} socketIdRef={socketIdRef} videoTrackRef={videoTrackRef} index={index} selected={selected}/>
-                        ))
-                    }
-
-                </div>
+                {
+                    participantsRef.current && participantsRef.current.length > 1 &&
+                    <div className='h-[90vh] overflow-y-auto flex flex-wrap justify-center py-2 md:gap-4 p-4 w-[30vw]'>
+                        {
+                            participantsRef.current && participantsRef.current.length > 0 && participantsRef.current.map((participant: ParticipantService, index: number) => (
+                                <RenderParticipants key={participant.socketId} onClick={() => setSelected(index)} {...participant} videosElementsRef={videosElementsRef} audiosElementRef={audiosElementRef} socketIdRef={socketIdRef} videoTrackRef={videoTrackRef} index={index} selected={selected}/>
+                            ))
+                        }
+                    </div>
+                }
+                
             </div>
 
             {/* controlls */}
@@ -160,21 +163,21 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
                     </PermissionButton>
 
 
-                    <PermissionButton permission={cameraPermisson} onClick={() => setIsBlur(prev => !prev)} className={` ${isBlur ? 'bg-green-600' : 'bg-gray-200 relative'}`}>
+                    {/* <PermissionButton permission={cameraPermisson} onClick={() => setIsBlur(prev => !prev)} className={` ${isBlur ? 'bg-green-600' : 'bg-gray-200 relative'}`}>
                         <TbScreenShare />
-                    </PermissionButton>
+                    </PermissionButton> */}
 
 
 
-                    {/* <button className={`p-2 text-2xl rounded-full ${isBlur ? 'bg-green-600' : 'bg-gray-200'}  text-black relative`} onClick={() => setIsBlur(prev => !prev)}>
+                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative'>
                         <TbScreenShare />
-                    </button> */}
-                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative' onClick={() => setTestingOpen(prev => !prev)}>
+                    </button>
+                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative' onClick={() => {setTestingOpen(prev => !prev); setChatOpen(false)}}>
                         <IoSettingsOutline />
                     </button>
 
 
-                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative md:hidden' onClick={() => setChatOpen(prev => !prev)}>
+                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative md:hidden' onClick={() => {setChatOpen(prev => !prev); setTestingOpen(false)}}>
                         <IoMdChatbubbles />
                     </button>
 
@@ -194,7 +197,7 @@ const page:React.FC<IProps> = ({params,searchParams}) => {
 
             
             </div>
-            <TestingSidebar open={testingOpen} onClose={() => setTestingOpen(false)}/>
+            <TestingSidebar open={testingOpen} onClose={() => setTestingOpen(false)} setIsBlur={setIsBlur} isBlur={isBlur}/>
             <PermissionDialog open={permissionOpen} onClose={() => setPermisstionOpen(false)}/>
             <ChatSidebar open={chatOpen} onClose={() => setChatOpen(false)} name={username} room_id={room_id}/>
             
