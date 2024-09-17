@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react'
 import { GrPowerReset } from "react-icons/gr";
+
 function generateRandomString() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -14,9 +15,9 @@ function generateRandomString() {
     return result;
   }
 
-  const part1 = 'u' + getRandomPart(2);  // Starts with 'u' followed by 2 random digits/letters
-  const part2 = getRandomPart(3);        // 3 random digits/letters
-  const part3 = getRandomPart(3);        // 3 random digits/letters
+  const part1 = 'u' + getRandomPart(2);  
+  const part2 = getRandomPart(3);        
+  const part3 = getRandomPart(3); 
 
   return `${part1}-${part2}-${part3}`;
 }
