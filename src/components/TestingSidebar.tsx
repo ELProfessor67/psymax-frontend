@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import UserMediaService from '@/services/usermedia';
+import useIsMobile from '@/hooks/useIsMobile';
 
 interface IProps {
   open: boolean;
@@ -18,10 +20,13 @@ declare global {
 const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const speakerRef = useRef<HTMLAudioElement>(null);
+  const videoCanvasRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const minOnRef = useRef<boolean | null>(false)
+  const minOnRef = useRef<boolean | null>(false);
+  const usermediaRef = useRef<UserMediaService | null>(null)
 
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -34,18 +39,21 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
   const [audioStart, setAudioStart] = useState(false);
   const [speakerStart, setSpeakerStart] = useState(false);
   const [audioFhz, setAudioFhz] = useState(0);
+  const isModile = useIsMobile();
 
   const AudioProcess = useCallback(() => {
-    
+   
     if (!analyserRef.current || !minOnRef.current) {
       setAudioFhz(0);
       return
     }
+    
     const array = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(array);
     const arraySum = array.reduce((a, value) => a + value, 0);
     const average = arraySum / array.length;
     const voiceVolume = Math.round(average);
+
     setAudioFhz(voiceVolume);
 
   }, [analyserRef.current,minOnRef.current])
@@ -97,17 +105,22 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
     getEnumerateDevice();
   }, [getEnumerateDevice]);
 
+  useEffect(() => {
+    if(usermediaRef.current && usermediaRef.current.segmenter){
+      usermediaRef.current.blurBackground(usermediaRef.current.segmenter,isBlur ? 10 : 0);
+    }
+  },[isBlur])
+
   // Play the selected video device
   const playVideo = async (deviceId: string) => {
 
     try {
       if (!videoStart) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId },
-        });
+        usermediaRef.current = new UserMediaService(videoCanvasRef,canvasRef,isBlur);
+        const videoTrack = await usermediaRef.current.getVideoTrack(deviceId);
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        if (videoRef.current && videoTrack) {
+          videoRef.current.srcObject = new MediaStream([videoTrack]);
           videoRef.current.play();
         }
         setVideoStart(true)
@@ -135,16 +148,16 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
         minOnRef.current = true;
         startAudioFhz(stream);
 
-        // if (audioRef.current) {
-        //   audioRef.current.srcObject = stream;
-        //   audioRef.current.play();
-        // }
+        if (audioRef.current) {
+          audioRef.current.srcObject = stream;
+          audioRef.current.play();
+        }
         setAudioStart(true);
       } else {
         if (audioRef.current) {
           minOnRef.current = false;
           scriptProcessorRef.current?.removeEventListener('audioprocess',AudioProcess);
-          // audioRef.current.pause();
+          audioRef.current.pause();
           setAudioStart(false);
         }
       }
@@ -191,9 +204,12 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
 
   return (
     <div
-      className={`absolute top-0 right-0 w-[25rem] shadow-xl z-50 h-screen bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
+      className={!isModile ? `w-[25rem] shadow-xl z-50 bg-white transition-all h-[90vh] ${open ? 'block' : 'hidden'
+        } py-4 px-4` : `absolute top-0 right-0 w-[25rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
         } py-4 px-4`}
     >
+       <video ref={videoCanvasRef} style={{ display: "none" }}></video>
+       <canvas ref={canvasRef} width={640} height={480} style={{ display: "none" }}></canvas>
       <h2 className="text-black/90 text-3xl font-bold mb-3">Einstellungen</h2>
 
       {/* Test your camera */}
@@ -202,7 +218,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
         <div className="flex items-center mb-2">
           <button
             onClick={() => playVideo(selectedVideo || videoDevices[0]?.deviceId)}
-            className="py-1 px-4 bg-blue-500 text-white rounded"
+            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
           >
             {videoStart ? 'Stop' : 'Start'}
           </button>
@@ -231,7 +247,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
         <div className="flex items-center mb-2">
           <button
             onClick={() => playAudio(selectedAudio || audioDevices[0]?.deviceId)}
-            className="py-1 px-4 bg-blue-500 text-white rounded"
+            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
           >
             {audioStart ? 'Stop' : 'Start'}
           </button>
@@ -253,7 +269,10 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
         <audio ref={audioRef} controls className="w-full hidden"></audio>
         <div className="flex items-center">
           <p className="text-sm text-black/70">Lautstärke</p>
-          <input type="range" className="ml-2" min={0} max={100} step={1} onChange={handleVolume} value={audioFhz}/>
+          <div className={`w-full bg-gray-200 h-[5px] rounded-md ml-2 relative overflow-hidden`}>
+            <div className={`bg-[#2B86FC] h-full`} style={{width: `${audioFhz}%`}}></div>
+          </div>
+          {/* <input type="range" className="ml-2 w-full remove-dot" min={0} max={100} step={1} onChange={handleVolume} value={audioFhz} /> */}
         </div>
       </div>
 
@@ -265,7 +284,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
             onClick={() => {
               changeOutputDevice(selectedOutput || outputDevices[0]?.deviceId);
             }}
-            className="py-1 px-4 bg-blue-500 text-white rounded"
+            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
           >
             {speakerStart ? 'Stop' : 'Start'}
           </button>

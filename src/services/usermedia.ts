@@ -13,6 +13,7 @@ class UserMediaService {
    public isBlur: Boolean;
    public segmenter:Segmenter = null;
    public canvasTrack:MediaStreamTrack | null = null;
+   public displayMedia: MediaStreamTrack | null = null;
 
    constructor(videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur: Boolean){
     this.audioTrack = null;
@@ -97,9 +98,25 @@ class UserMediaService {
    }
 
 
-    async getVideoTrack():Promise<MediaStreamTrack | null>{
+    async getVideoTrack(deviceId: string | null = null):Promise<MediaStreamTrack | null>{
       try {
-        const stream:MediaStream = await window.navigator.mediaDevices.getUserMedia({
+        let stream:MediaStream;
+        if(deviceId){
+          stream= await window.navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId:deviceId,
+                width: {
+                  min: 640,
+                  max: 1920,
+                },
+                height: {
+                  min: 400,
+                  max: 1080,
+                }
+              }
+          });
+        }else{
+          stream= await window.navigator.mediaDevices.getUserMedia({
             video: {
               width: {
                 min: 640,
@@ -111,6 +128,8 @@ class UserMediaService {
               }
             }
         });
+        }
+        
 
 
 
@@ -146,6 +165,22 @@ class UserMediaService {
         return this.videoTrack;
       }
     }
+
+
+
+    async getDisplayTrack():Promise<MediaStreamTrack | null>{
+      try {
+        const stream:MediaStream = await window.navigator.mediaDevices.getDisplayMedia({
+         video: true
+        });
+
+        this.displayMedia = stream.getVideoTracks()[0]
+        return this.displayMedia as MediaStreamTrack;
+      } catch (error) {
+        this.displayMedia = null
+        return this.displayMedia
+      }
+   }
 
 
    private async initSegmenter  () {

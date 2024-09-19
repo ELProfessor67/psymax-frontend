@@ -28,7 +28,8 @@ const useChatSocket = (name:string,room_id:string,setMessages:React.Dispatch<Rea
         isMe: socketId == chatSocketIdRef.current,
         name,
         socketId,
-        message
+        message,
+        datetime: new Date(Date.now())
       }
 
       setMessages(prev => [...prev,newMessage]);

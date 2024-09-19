@@ -2,13 +2,20 @@ import React from 'react'
 import { IUserMessage } from './ChatSidebar'
 
 
-
-
-const MessageBox:React.FC<IUserMessage> = ({message,name,isMe}) => {
+function getTime(date: Date) {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+const MessageBox:React.FC<IUserMessage> = ({message,name,isMe,datetime}) => {
   return (
-    <div className='py-2 px-3 rounded-md bg-gray-100 my-3'>
-        <h3 className='text-black/50'>{name} {isMe ? '(You)': ''}</h3>
-        <p className='text-black/80'>{message}</p>
+    <div className='py-2 px-3 rounded-md  my-3'>
+      <div className={`flex items-center gap-2 ${isMe ? 'justify-end': 'justify-start'}`}>
+
+        <h3 className='text-[#3C3C3C] text-[16px] font-semibold'>{name}</h3>
+        <span className='text-[#2B86FC] text-[12px] mt-1 font-semibold'>{datetime && getTime(datetime)}</span>
+      </div>
+        <p className={`text-[#707070] text-[16px] font-normal ${isMe ? 'text-right': 'text-left'}`}>{message}</p>
     </div>
   )
 }

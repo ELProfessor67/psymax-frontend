@@ -11,14 +11,17 @@ interface IProps {
     videosElementsRef: MutableRefObject<IVideoRef>
     socketIdRef: MutableRefObject<string | null>
     videoTrackRef: MutableRefObject<MediaStreamTrack | null>
+    displayTrackRef: MutableRefObject<MediaStreamTrack | null>
     isMicMute: Boolean
     isWebCamMute: Boolean
     onClick: () => void;
     index: number;
     selected: number;
+    superForceRender: number;
+    isShareScreen: boolean;
 }
 
-const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,isMicMute,isWebCamMute,onClick,index,selected}) => {
+const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,isMicMute,isWebCamMute,onClick,index,selected,superForceRender,displayTrackRef,isShareScreen}) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -37,25 +40,30 @@ const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosEl
   };
 
   useEffect(() => {
+    console.log(videoRef.current && videoTrackRef.current,videoTrackRef.current,'ppppppp')
     if(socketIdRef.current == socketId){
+      if(videoRef.current && displayTrackRef.current){
+        videoRef.current.srcObject = new MediaStream([displayTrackRef.current])
+        return
+      }
       if(videoRef.current && videoTrackRef.current){
         videoRef.current.srcObject = new MediaStream([videoTrackRef.current])
+        return
       }
     }
-  },[socketId,socketIdRef.current,videoTrackRef.current])
+  },[socketId,socketIdRef.current,videoTrackRef.current,superForceRender])
+
+
 
   return (
-    <div className={`max-w-[18rem] h-[15rem] md:w-[30rem] md:h-[20rem] bg-gray-50 shadow-xl rounded-md flex items-center justify-center ${selected == index ? 'hidden' : 'block'}`} onClick={onClick}>
-      <div className=''>
-{/*         
-         <div className={`${isWebCamMute == false ? 'block': 'hidden'}`}>
-         <video autoPlay ref={setVideoRefs}></video>
-        </div>
+    <div className={`w-[20rem] max-h-[15rem] md:w-full md:h-[20rem] bg-[#3C3C3C] shadow-xl rounded-md flex items-center justify-center ${selected == index ? 'hidden' : 'block'} relative`} onClick={onClick}>
+        
 
-        <h1 className={`text-2xl font-semibold ${isWebCamMute == true ? 'block': 'hidden'}`}>{name} {socketId == socketIdRef.current && "(You)"}</h1> */}
-        <h1 className={`text-2xl font-semibold`}>{name}</h1>
+        <video autoPlay ref={setVideoRefs} className={`absolute top left-0 right-0 bottom-0 object-cover z-0 w-full h-full ${!isWebCamMute || isShareScreen ? 'block': 'hidden'}`}></video>
+        
+        <h1 className={`text-2xl font-semibold text-white z-10`}>{name}</h1>
         <audio ref={setAudioRefs} autoPlay></audio>
-      </div>
+    
     </div>
   )
 }

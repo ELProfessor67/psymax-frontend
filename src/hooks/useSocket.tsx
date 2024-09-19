@@ -1,5 +1,5 @@
 import { CONNECT_TRANSPORT, CONSUME, CONSUME_RESUME, CREATE_WEBRTC_TRANSPORT, GET_PRODUCERS, JOIN_ROOM, MUTE_UNMUTE, NEW_PARTCIPANT_JOIN, NEW_PRODUCER, PARTICIPANTS_DISCONNECT, PRODUCE_TRANSPORT, TRANSPORT_RECV_CONNECT } from '@/constant/events';
-import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
+import React, { Dispatch, MutableRefObject, SetStateAction, useCallback, useEffect, useRef, useState } from 'react'
 import { io, Socket } from "socket.io-client";
 import * as mediasoupClient from 'mediasoup-client';
 import { ClientToServerEvents, IProducerData, ServerToClientEvents } from '@/types/socket';
@@ -44,7 +44,7 @@ let params = {
 
 
 
-const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicMute:Boolean,videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur:Boolean) => {
+const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicMute:boolean,videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur:boolean,isScreenShare:boolean,setSuperForceRender:React.Dispatch<React.SetStateAction<number>>,setPermisstionOpen:Dispatch<SetStateAction<boolean>>,setIsScreenShare:Dispatch<SetStateAction<boolean>>) => {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [, forceRender] = useState(false);
 
@@ -54,17 +54,21 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
   const socketRef = useRef<null | Socket<ServerToClientEvents, ClientToServerEvents>>(null);
   const audioTrackRef = useRef<null | MediaStreamTrack>(null);
   const videoTrackRef = useRef<null | MediaStreamTrack>(null);
+  const displayTrackRef = useRef<null | MediaStreamTrack>(null);
   const producerTransportRef = useRef<mediasoupClient.types.Transport | null>(null);
   const audioProducerRef = useRef<null | mediasoupClient.types.Producer>(null);
   const videoProducerRef = useRef<null | mediasoupClient.types.Producer>(null);
+  const displayProducerRef = useRef<null | mediasoupClient.types.Producer>(null);
   const audioParamsRef = useRef<any | null>(null);
   const videoParamsRef = useRef<any | null>(null);
+  const displayParamsRef = useRef<any | null>(null);
   const consumerTransports = useRef<IConsumingTransport[]>([]);
   const consumingTransports = useRef<string[]>([]);
   const videosElementsRef = useRef<IVideoRef>({});
   const audiosElementRef = useRef<IAudioRef>({});
-  const isMicMuteRef = useRef<Boolean>(false);
-  const isWebCamMuteRef = useRef<Boolean>(false);
+  const isMicMuteRef = useRef<boolean>(false);
+  const isWebCamMuteRef = useRef<boolean>(false);
+  const isScreenShareRef = useRef<boolean>(false);
   const socketIdRef = useRef<null | string>(null);
   const usermediaRef = useRef<UserMediaService | null>(null)
   const remoteVideoTracksRef = useRef<IVideoTraks>({});
@@ -80,6 +84,10 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
     isWebCamMuteRef.current = isWebCamMute;
   },[isWebCamMute])
 
+  useEffect(() => {
+    isScreenShareRef.current = isScreenShare;
+  },[isScreenShare])
+
 
   // on blur change
   useEffect(() => {
@@ -94,7 +102,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
 
   function initSocket() {
     if (socketRef.current == null) {
-      socketRef.current = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}/mediasoup`);
+      socketRef.current = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}`);
     }
   }
 
@@ -151,7 +159,11 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
             });
           }
         } else {
+          console.log('track aaya',track)
           participantRef.videoTrack = track;
+          if(remoteVideoTracksRef.current[socketId]){
+            delete remoteVideoTracksRef.current[socketId];
+          }
           remoteVideoTracksRef.current[socketId] = track;
           if(videosElementsRef.current[socketId]){
             videosElementsRef.current[socketId].srcObject = new MediaStream([track])
@@ -163,7 +175,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
       }
       console.log('audio',audiosElementRef.current[socketId])
       socketRef.current?.emit(CONSUME_RESUME, { serverConsumerId: params.serverConsumerId });
-      
+      setSuperForceRender(Math.random() * 1000);
       forceRender(prev => !prev);
     })
   },[videosElementsRef.current,audiosElementRef.current]);
@@ -372,7 +384,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
         }
 
         //add own self in  participants
-        const newParticipant: ParticipantService = new ParticipantService(username, socketId,isWebCamMuteRef.current,isMicMuteRef.current);
+        const newParticipant: ParticipantService = new ParticipantService(username, socketId,isWebCamMuteRef.current,isMicMuteRef.current, isScreenShareRef.current);
         newParticipant.audioTrack =  audioParamsRef.current;
         newParticipant.videoTrack =  videoParamsRef.current;
 
@@ -392,7 +404,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
     }, [socketRef.current,isMicMuteRef.current,isWebCamMuteRef.current]);
 
 
-    const handleMuteUnmute = useCallback(async (value:Boolean,type: 'mic' | 'cam') => {
+    const handleMuteUnmute = useCallback(async (value:boolean,type: 'mic' | 'cam') => {
       const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketIdRef.current);
       if(participant){
         if(type == 'mic'){
@@ -417,15 +429,18 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
 
         }else{
           participant.isWebCamMute = value;
+          participant.isShareScreen = false;
+          displayTrackRef.current = null;
 
            //producer audio
            if(!videoTrackRef.current){
-            videoTrackRef.current = await usermediaRef.current?.getVideoTrack() as MediaStreamTrack | null;
-
-            if(videoTrackRef.current){
-              videoParamsRef.current = { track: videoTrackRef.current, ...params };
-              ProduceTrack('video',videoProducerRef,videoParamsRef);
+              videoTrackRef.current = await usermediaRef.current?.getVideoTrack() as MediaStreamTrack | null;
             }
+           
+
+          if(videoTrackRef.current){
+            videoParamsRef.current = { track: videoTrackRef.current, ...params };
+            ProduceTrack('video',videoProducerRef,videoParamsRef);
           }
 
           if(value && videoTrackRef.current){
@@ -437,8 +452,41 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
       }
       socketRef.current?.emit(MUTE_UNMUTE,{value,type,socketId: socketIdRef.current});
       forceRender(prev => !prev);
+      setSuperForceRender(Math.random() * 1000)
     },[socketIdRef.current])
 
+
+    const handleScreenShare = useCallback(async (type:'share' | 'unshare') => {
+      const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketIdRef.current);
+      if(type == 'share' && usermediaRef.current){
+        
+        displayTrackRef.current = await usermediaRef.current.getDisplayTrack();
+        if(!displayTrackRef.current ){
+          setIsScreenShare(false);
+          return
+        }
+        displayParamsRef.current = { track: displayTrackRef.current, ...params };
+        ProduceTrack('video',displayProducerRef,displayParamsRef);
+        
+        if( participant){
+          participant.isShareScreen = true;
+          participant.isWebCamMute = true;
+        }
+        socketRef.current?.emit(MUTE_UNMUTE,{value:false,type:'cam',socketId: socketIdRef.current});
+      }else{
+
+        displayTrackRef.current = null;
+        displayProducerRef.current?.close();
+        if( participant){
+          participant.isShareScreen = false;
+        }
+        socketRef.current?.emit(MUTE_UNMUTE,{value:true,type:'cam',socketId: socketIdRef.current});
+      }
+
+      forceRender(prev => !prev);
+      setSuperForceRender(Math.random() * 1000);
+
+    },[socketIdRef.current,usermediaRef.current]);
 
 
     
@@ -478,6 +526,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
 
 
       socketRef.current?.on(MUTE_UNMUTE,({value,type,socketId}) => {
+        console.log(value,type,socketId)
         const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketId);
         if(participant){
           if(type == 'mic'){
@@ -498,8 +547,10 @@ const useSocket = (room_id: string, username: string,isWebCamMute:Boolean,isMicM
       }
     }, []);
 
+    
+
     return (
-      { handleJoin, participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute,remoteVideoTracksRef}
+      { handleJoin, participantsRef,videosElementsRef,audiosElementRef,socketIdRef,videoTrackRef,handleMuteUnmute,remoteVideoTracksRef,handleScreenShare,displayTrackRef}
     )
   }
 

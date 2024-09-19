@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
-const useCheckPermission = () => {
+const useCheckPermission = (setPermisstionOpen:Dispatch<SetStateAction<boolean>>) => {
     const [cameraPermisson, setCameraPermission] = useState(false);
     const [audioPermisson, setAudioPermission] = useState(false);
     const [cameraPermissonStatus, setCameraPermissionStatus] = useState('prompt');
@@ -13,6 +13,7 @@ const useCheckPermission = () => {
             setPermissionState(true);
           } else if (permissionStatus.state === 'denied') {
             setPermissionState(false);
+            setPermisstionOpen(true)
           } else if (permissionStatus.state === 'prompt') {
             setPermissionState(true);
           }

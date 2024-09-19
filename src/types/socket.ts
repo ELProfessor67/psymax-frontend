@@ -24,7 +24,7 @@ export interface IConsumerParams {
 }
 
 export interface ServerToClientEvents {
-  [NEW_PARTCIPANT_JOIN]: (data: { socketId: string, username: string,isWebCamMute:Boolean,isMicMute:Boolean }) => void;
+  [NEW_PARTCIPANT_JOIN]: (data: { socketId: string, username: string,isWebCamMute:boolean,isMicMute:boolean }) => void;
   
   [PARTICIPANTS_DISCONNECT]: (data: { socketId: string }) => void;
 
@@ -34,7 +34,7 @@ export interface ServerToClientEvents {
 
   [MUTE_UNMUTE]: (
     data: {
-      value:Boolean
+      value:boolean
       type: 'mic' | 'cam'
       socketId: string | null
     }
@@ -43,13 +43,13 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   [JOIN_ROOM]: (
-    data: { room_id: string; username: string,isWebCamMute:Boolean,isMicMute:Boolean },
+    data: { room_id: string; username: string,isWebCamMute:boolean,isMicMute:boolean },
     callback: (socketId: string, rtpCapabilities: mediasoupClient.types.RtpCapabilities, participants: ParticipantService[]) => void
   ) => void;
 
 
   [CREATE_WEBRTC_TRANSPORT]: (
-    data: { consumer: Boolean },
+    data: { consumer: boolean },
     callback: (data: { params: ItransportPrams }) => void
   ) => void;
 
@@ -61,7 +61,7 @@ export interface ClientToServerEvents {
     rtpParameters: mediasoupClient.types.RtpParameters,
     appData: mediasoupClient.types.AppData
   },
-    callback: (data: { id: string, producersExist: Boolean }) => void
+    callback: (data: { id: string, producersExist: boolean }) => void
   ) => void;
 
 
@@ -95,7 +95,7 @@ export interface ClientToServerEvents {
 
   [MUTE_UNMUTE]: (
     data: {
-      value:Boolean
+      value:boolean
       type: 'mic' | 'cam'
       socketId: string | null
     }
