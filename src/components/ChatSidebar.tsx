@@ -36,8 +36,8 @@ const ChatSidebar: React.FC<IProps> = ({ open, onClose,name,room_id }) => {
     },[message])
     return (
         <div
-            className={!isModile ? `w-[25rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'block' : 'hidden'
-                } py-4 px-4` : `absolute top-0 right-0 w-[25rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
+            className={!isModile ? `w-[22rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'block' : 'hidden'
+                } py-4 px-4` : `absolute top-0 right-0 w-[22rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
                 } py-4 px-4`}
         >
             <h2 className='text-[28px] font-bold text-[#3C3C3C]'>Chat</h2>

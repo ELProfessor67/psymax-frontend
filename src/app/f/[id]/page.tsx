@@ -16,7 +16,11 @@ import RenderParticipants from '@/components/RenderParticipants';
 import TestingSidebar from '@/components/TestingSidebar';
 import PermissionDialog from '@/components/PermissionDialog';
 import ChatSidebar from '@/components/ChatSidebar';
+import Typewriter from 'typewriter-effect';
+import { IoIosShareAlt } from "react-icons/io";
+import { IoPauseOutline } from "react-icons/io5";
 
+type Speed = "natural" | number
 
 interface IProps {
     params: {
@@ -169,8 +173,29 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
 
 
 
+    const handleCopy = useCallback(() => {
+        const url = window.location.origin + `/?room=${room_id}`
+        navigator.clipboard.writeText(url);
+    }, []);
+
+
+
     return (
         <section className='section'>
+
+            {
+                isScreenShare &&
+                <div className={`bg-white absolute top-8 left-[50%] -translate-x-[50%] flex items-center z-50 shadow-xl px-2 py-2 rounded-md gap-4`}>
+                    <p>Sie sind im Präsentationsmodus</p>
+                    <button title={isScreenShare ? 'präsentieren stoppen' : 'Präsentieren'} className={`p-2 text-2xl rounded-full  relative bg-[#EEEEEE]`} onClick={shareScreen}>
+                        <IoPauseOutline />
+                    </button>
+                    <button className='py-2 px-4 rounded-md bg-[#E30C40] text-white text-[14px] font-medium' onClick={shareScreen}>
+                        Bendeen
+                    </button>
+                </div>
+            }
+
             {/* sessions  */}
             <video ref={videoCanvasRef} style={{ display: "none" }}></video>
             <canvas ref={canvasRef} width={640} height={480} style={{ display: "none" }}></canvas>
@@ -180,9 +205,33 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
                     {
 
                         participantsRef.current && participantsRef.current.length > 0 && participantsRef.current[selected] &&
-                        <div className='w-full relative flex items-center justify-center md:h-[90vh] h-[60vh]' key={participantsRef.current[selected].socketId}>
+                        <div className={`w-full relative flex items-center justify-center md:h-[90vh] h-[60vh] ${participantsRef.current.length > 1 ? 'bg-[#3C3C3C] text-white' : 'bg-white'}`} key={participantsRef.current[selected].socketId}>
                             <div className={`${(participantsRef.current[selected].isWebCamMute === true && participantsRef.current[selected].isShareScreen === false) ? 'block' : 'hidden'}`}>
-                                <h1 className='text-4xl font-semibold'>{participantsRef.current[selected].socketId == socketIdRef.current && participantsRef.current.length == 1 && "Hello!"} {participantsRef.current[selected].name}</h1>
+                                <h1 className='text-4xl font-semibold w-[15rem]'>
+
+                                    <Typewriter
+                                        options={{
+                                            strings: [`${participantsRef.current[selected].socketId == socketIdRef.current && participantsRef.current.length == 1 ? "Hello!" : ""} ${participantsRef.current[selected].name}`],
+                                            autoStart: true,
+                                            loop: false,
+                                            deleteSpeed: (100 * 100 * 100),
+                                            cursor: ''
+                                        }}
+                                    />
+                                </h1>
+                                {
+                                    participantsRef.current.length == 1 &&
+                                    <p className='text-[#707070] mt-2 text-[16px]'>
+                                        <Typewriter
+                                            options={{
+                                                strings: [`Es solite gleich losgehen.`],
+                                                autoStart: true,
+                                                loop: true,
+                                            }}
+                                        />
+
+                                    </p>
+                                }
                             </div>
                             <div className={`${(participantsRef.current[selected].isWebCamMute == false || participantsRef.current[selected].isShareScreen === true) ? 'block' : 'hidden'} w-full h-full`}>
                                 <video ref={selectedVideoRef} autoPlay className='w-full h-full object-contain'> </video>
@@ -192,9 +241,35 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
 
                     {
                         participantsRef.current && participantsRef.current.length > 0 && !participantsRef.current[selected] &&
-                        <div className='w-full md:h-[90vh] h-[60vh]  flex items-center justify-center relative' key={participantsRef.current[0].socketId}>
+                        <div className={`w-full relative flex items-center justify-center md:h-[90vh] h-[60vh] ${participantsRef.current.length > 1 ? 'bg-[#3C3C3C] text-white' : 'bg-white'}`} key={participantsRef.current[0].socketId}>
                             <div className={`${(participantsRef.current[0].isWebCamMute == true || participantsRef.current[0].isShareScreen == true) ? 'block' : 'hidden'}`}>
-                                <h1 className='text-4xl font-semibold'>{participantsRef.current[0].socketId == socketIdRef.current && "Hello!"} {participantsRef.current[0].name}</h1>
+                                <h1 className='text-4xl font-semibold'>
+
+                                    <Typewriter
+                                        options={{
+                                            strings: [`${participantsRef.current[0].socketId == socketIdRef.current && participantsRef.current.length == 1 ? "Hello!" : ""} ${participantsRef.current[0].name}`],
+                                            autoStart: true,
+                                            loop: false,
+                                            deleteSpeed: (100 * 100 * 100),
+                                            cursor: ''
+                                        }}
+                                    />
+                                </h1>
+                                {
+                                    participantsRef.current.length == 1 &&
+                                    <p className='text-[#707070] mt-2 text-[16px]'>
+                                        <Typewriter
+                                            options={{
+                                                strings: [`Es solite gleich losgehen.`],
+                                                autoStart: true,
+                                                loop: true,
+                                            }}
+                                        />
+
+                                    </p>
+                                }
+
+
                             </div>
                             <div className={`${(participantsRef.current[0].isWebCamMute == false || participantsRef.current[0].isShareScreen === true) ? 'block' : 'hidden'} w-full h-full`}>
                                 <video ref={selectedVideoRef} autoPlay className='w-full h-full object-contain'> </video>
@@ -204,7 +279,7 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
                 </div>
                 {
                     participantsRef.current && participantsRef.current.length > 1 &&
-                    <div className='md:h-[90vh] h-[30vh] relative overflow-x-auto md:overflow-x-hidden flex flex-wrap flex-row md:flex-col justify-center py-2 md:gap-4 p-4 w-[30vw]'>
+                    <div className={`md:h-[90vh] h-[30vh] relative overflow-x-auto md:overflow-x-hidden flex flex-wrap flex-row justify-end items-end md:flex-col py-2 md:gap-4 p-4 w-[30vw] ${participantsRef.current.length > 1 ? 'bg-[#3C3C3C]' : 'bg-white'}`}>
                         {
                             participantsRef.current && participantsRef.current.length > 0 && participantsRef.current.map((participant: ParticipantService, index: number) => (
                                 <RenderParticipants key={participant.socketId} onClick={() => setSelected(index)} {...participant} videosElementsRef={videosElementsRef} audiosElementRef={audiosElementRef} socketIdRef={socketIdRef} videoTrackRef={videoTrackRef} index={index} selected={selected} superForceRender={superForceRender} displayTrackRef={displayTrackRef} />
@@ -214,7 +289,7 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
                 }
 
                 <ChatSidebar open={chatOpen} onClose={() => setChatOpen(false)} name={username} room_id={room_id} />
-                <TestingSidebar open={testingOpen} onClose={() => setTestingOpen(false)} setIsBlur={setIsBlur} isBlur={isBlur} />
+                <TestingSidebar open={testingOpen} onClose={() => setTestingOpen(false)} setIsBlur={setIsBlur} isBlur={isBlur} audioPermisson={audioPermisson} cameraPermisson={cameraPermisson} />
 
             </div>
 
@@ -225,10 +300,10 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
 
 
                     <div className='flex items-center gap-4'>
-                        <PermissionButton permission={audioPermisson} onClick={handleMicMute} className={`${isMicMute && audioPermisson ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>
+                        <PermissionButton permission={audioPermisson} title={!audioPermisson ? 'Weitere infos anzeigen' : isMicMute ? 'mIKRO einschalten' : 'mIKRO AusSchalten'} onClick={handleMicMute} className={`${isMicMute && audioPermisson ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>
                             {isMicMute ? <FiMicOff /> : <FiMic />}
                         </PermissionButton>
-                        <PermissionButton permission={cameraPermisson} onClick={handleVideoMute} className={`${isWebCamMute && audioPermisson ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>
+                        <PermissionButton permission={cameraPermisson} title={!cameraPermisson ? 'Weitere infos anzeigen' : isWebCamMute ? 'Video einschalten' : 'Video AusSchalten'} onClick={handleVideoMute} className={`${isWebCamMute && audioPermisson ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>
                             {isWebCamMute ? <FiCameraOff /> : <FiCamera />}
                         </PermissionButton>
 
@@ -239,20 +314,24 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
 
 
 
-                        <button className={`p-2 text-2xl rounded-full  relative ${isScreenShare ? 'bg-green-600 text-white' : 'bg-gray-200 text-black'}`} onClick={shareScreen}>
+                        <button title={isScreenShare ? 'präsentieren stoppen' : 'Präsentieren'} className={`p-2 text-2xl rounded-full  relative ${isScreenShare ? 'bg-red-600 text-white' : 'bg-gray-200 text-black'}`} onClick={shareScreen}>
                             <TbScreenShare />
                         </button>
-                        <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative' onClick={() => { setTestingOpen(prev => !prev) }}>
+                        <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative' onClick={() => { setTestingOpen(prev => !prev) }} title='Einstellungen'>
                             <IoSettingsOutline />
                         </button>
 
 
-                        <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative md:hidden' onClick={() => { setChatOpen(prev => !prev) }}>
+                        <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative md:hidden' onClick={() => { setChatOpen(prev => !prev) }} title='CHAT'>
                             <IoMdChatbubbles />
                         </button>
 
+                        <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative' onClick={handleCopy} title='SHARE'>
+                            <IoIosShareAlt />
+                        </button>
 
-                        <a href="/" className='p-2 px-4 text-2xl rounded-full bg-red-600 text-white relative'>
+
+                        <a href="/" className='p-2 px-4 text-2xl rounded-full bg-red-600 text-white relative' title='Verbindung trennen'>
                             <FaPhoneSlash />
                         </a>
 
@@ -261,7 +340,7 @@ const page: React.FC<IProps> = ({ params, searchParams }) => {
                     </div>
 
 
-                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative hidden md:block' onClick={() => setChatOpen(prev => !prev)}>
+                    <button className='p-2 text-2xl rounded-full bg-gray-200 text-black relative hidden md:block' onClick={() => setChatOpen(prev => !prev)} title='CHAT'>
                         <IoMdChatbubbles />
                     </button>
 

@@ -9,6 +9,13 @@ interface IProps {
   onClose: () => void;
   setIsBlur: React.Dispatch<React.SetStateAction<boolean>>;
   isBlur: boolean;
+  audioPermisson: boolean;
+  cameraPermisson: boolean;
+}
+
+
+interface CustomAuioElement extends HTMLAudioElement{
+  captureStream: () => MediaStream;
 }
 
 declare global {
@@ -17,9 +24,9 @@ declare global {
   }
 }
 
-const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) => {
+const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, audioPermisson,cameraPermisson }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const speakerRef = useRef<HTMLAudioElement>(null);
+  const speakerRef = useRef<CustomAuioElement>(null);
   const videoCanvasRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,6 +34,10 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
   const analyserRef = useRef<AnalyserNode | null>(null);
   const minOnRef = useRef<boolean | null>(false);
   const usermediaRef = useRef<UserMediaService | null>(null)
+
+  const speakerScriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const speakerAnalyserRef = useRef<AnalyserNode | null>(null);
+  const speakerMinOnRef = useRef<boolean | null>(false);
 
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -39,6 +50,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
   const [audioStart, setAudioStart] = useState(false);
   const [speakerStart, setSpeakerStart] = useState(false);
   const [audioFhz, setAudioFhz] = useState(0);
+  const [speakerFhz, setSpeakerFhz] = useState(0);
   const isModile = useIsMobile();
 
   const AudioProcess = useCallback(() => {
@@ -57,6 +69,26 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
     setAudioFhz(voiceVolume);
 
   }, [analyserRef.current,minOnRef.current])
+
+
+
+  const SpeackerProcess = useCallback(() => {
+   console.log('ssssss')
+    if (!speakerAnalyserRef.current || !speakerMinOnRef.current) {
+      setSpeakerFhz(0);
+      return
+    }
+    
+    const array = new Uint8Array(speakerAnalyserRef.current.frequencyBinCount);
+    speakerAnalyserRef.current.getByteFrequencyData(array);
+    const arraySum = array.reduce((a, value) => a + value, 0);
+    const average = arraySum / array.length;
+    const voiceVolume = Math.round(average);
+
+    setSpeakerFhz(voiceVolume);
+
+  }, [speakerAnalyserRef.current,speakerMinOnRef.current])
+
 
 
 
@@ -81,6 +113,30 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
 
   }, [minOnRef.current]);
 
+
+
+  const startSpeakerFhz = useCallback(async (stream: MediaStream) => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(stream);
+    await audioContext.resume(); 
+
+
+
+    const analyser = audioContext.createAnalyser();
+    const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+    analyser.smoothingTimeConstant = 0.8;
+    analyser.fftSize = 1024;
+    speakerAnalyserRef.current = analyser;
+    speakerScriptProcessorRef.current = scriptProcessor;
+
+    source.connect(analyser);
+    analyser.connect(scriptProcessor);
+    scriptProcessor.connect(audioContext.destination);
+    console.log('aaya')
+    speakerScriptProcessorRef.current.addEventListener('audioprocess',SpeackerProcess);
+
+  }, [speakerMinOnRef.current]);
+
   // Get available devices (video, audio input, audio output)
   const getEnumerateDevice = useCallback(async () => {
     try {
@@ -103,7 +159,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
 
   useEffect(() => {
     getEnumerateDevice();
-  }, [getEnumerateDevice]);
+  }, [getEnumerateDevice,audioPermisson,cameraPermisson]);
 
   useEffect(() => {
     if(usermediaRef.current && usermediaRef.current.segmenter){
@@ -177,9 +233,16 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
           speakerRef.current.currentTime = 0;
           speakerRef.current.play();
           setSpeakerStart(true);
+          const stream = speakerRef.current.captureStream();
+         
+          if(stream){
+            startSpeakerFhz(stream as MediaStream);
+          }
+          speakerMinOnRef.current = true;
         } else {
           speakerRef.current.pause();
           setSpeakerStart(false);
+          speakerMinOnRef.current = false;
         }
 
 
@@ -196,16 +259,11 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
   }, [open]);
 
 
-  const handleVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (audioRef.current) {
-      audioRef.current.volume = Number(e.target.value);
-    }
-  }
 
   return (
     <div
-      className={!isModile ? `w-[25rem] shadow-xl z-50 bg-white transition-all h-[90vh] ${open ? 'block' : 'hidden'
-        } py-4 px-4` : `absolute top-0 right-0 w-[25rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
+      className={!isModile ? `w-[22rem] shadow-xl z-50 bg-white transition-all h-[90vh] ${open ? 'block' : 'hidden'
+        } py-4 px-4` : `absolute top-0 right-0 w-[22rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
         } py-4 px-4`}
     >
        <video ref={videoCanvasRef} style={{ display: "none" }}></video>
@@ -213,7 +271,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
       <h2 className="text-black/90 text-3xl font-bold mb-3">Einstellungen</h2>
 
       {/* Test your camera */}
-      <div className="w-[23rem] relative mb-5">
+      <div className="w-[19rem] relative mb-5">
         <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihrer Kamera</h3>
         <div className="flex items-center mb-2">
           <button
@@ -242,7 +300,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
 
 
       {/* Test your microphone */}
-      <div className="w-[23rem] relative mb-5">
+      <div className="w-[19rem] relative mb-5">
         <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihres Mikrofons</h3>
         <div className="flex items-center mb-2">
           <button
@@ -277,7 +335,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
       </div>
 
       {/* Test audio output */}
-      <div className="w-[23rem] relative mb-5">
+      <div className="w-[19rem] relative mb-5">
         <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihrer Lautsprecher</h3>
         <div className="flex items-center mb-2">
           <button
@@ -304,11 +362,18 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur }) 
           </select>
         </div>
         <audio ref={speakerRef} src='/babe.mp3' controls className="w-full hidden"></audio>
+        <div className="flex items-center">
+          <p className="text-sm text-black/70">Lautstärke</p>
+          <div className={`w-full bg-gray-200 h-[5px] rounded-md ml-2 relative overflow-hidden`}>
+            <div className={`bg-[#2B86FC] h-full`} style={{width: `${speakerFhz}%`}}></div>
+          </div>
+  
+        </div>
 
       </div>
 
       {/* Additional options */}
-      <div className="w-[23rem] mb-5">
+      <div className="w-[19rem] mb-5">
         <label className="flex items-center space-x-2">
           <input type="checkbox" className="form-checkbox" checked={isBlur} onChange={() => setIsBlur(prev => !prev)} />
           <span className="text-black/70">Hintergrund weichzeichnen</span>

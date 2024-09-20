@@ -2,15 +2,18 @@ import React, { FC, ReactNode } from 'react'
 
 
 interface Iprops {
-    permission: Boolean,
-    children: ReactNode,
-    onClick?: () => void,
-    className?: string
+    permission: Boolean;
+    children: ReactNode;
+    onClick?: () => void;
+    className?: string;
+    title?: string;
+    
+   
 }
 
-const PermissionButton: FC<Iprops> = ({ permission,children,onClick,className }) => {
+const PermissionButton: FC<Iprops> = ({ permission,children,onClick,className,...props }) => {
     return (
-        <button className={`p-2 text-2xl rounded-full bg-gray-200 text-black relative ${className}`} onClick={onClick} >
+        <button className={`p-2 text-2xl rounded-full bg-gray-200 text-black relative ${className}`} onClick={onClick} {...props}>
             {children}
             {
                 !permission &&
