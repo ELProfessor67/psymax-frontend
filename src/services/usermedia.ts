@@ -69,8 +69,10 @@ class UserMediaService {
         
         // return [this.canvasTrack as MediaStreamTrack,this.audioTrack]
         // // return [this.videoTrack,this.audioTrack]
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInput = devices.find(device => device.kind === 'videoinput');
 
-        const videoTrack = await this.getVideoTrack();
+        const videoTrack = await this.getVideoTrack(videoInput?.deviceId);
         const audioTrack = await this.getAudioTrack();
         
         return [videoTrack as MediaStreamTrack,audioTrack as MediaStreamTrack]
@@ -171,7 +173,11 @@ class UserMediaService {
     async getDisplayTrack():Promise<MediaStreamTrack | null>{
       try {
         const stream:MediaStream = await window.navigator.mediaDevices.getDisplayMedia({
-         video: true
+         video: {
+          width:{ideal: 1920},
+          height: {ideal: 1080},
+          frameRate: {ideal: 30}
+         }
         });
 
         this.displayMedia = stream.getVideoTracks()[0]

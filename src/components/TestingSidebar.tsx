@@ -14,7 +14,7 @@ interface IProps {
 }
 
 
-interface CustomAuioElement extends HTMLAudioElement{
+interface CustomAuioElement extends HTMLAudioElement {
   captureStream: () => MediaStream;
 }
 
@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, audioPermisson,cameraPermisson }) => {
+const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, audioPermisson, cameraPermisson }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const speakerRef = useRef<CustomAuioElement>(null);
   const videoCanvasRef = useRef<HTMLVideoElement | null>(null);
@@ -54,12 +54,12 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
   const isModile = useIsMobile();
 
   const AudioProcess = useCallback(() => {
-   
+
     if (!analyserRef.current || !minOnRef.current) {
       setAudioFhz(0);
       return
     }
-    
+
     const array = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(array);
     const arraySum = array.reduce((a, value) => a + value, 0);
@@ -68,17 +68,17 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
 
     setAudioFhz(voiceVolume);
 
-  }, [analyserRef.current,minOnRef.current])
+  }, [analyserRef.current, minOnRef.current])
 
 
 
   const SpeackerProcess = useCallback(() => {
-   console.log('ssssss')
+    console.log('ssssss')
     if (!speakerAnalyserRef.current || !speakerMinOnRef.current) {
       setSpeakerFhz(0);
       return
     }
-    
+
     const array = new Uint8Array(speakerAnalyserRef.current.frequencyBinCount);
     speakerAnalyserRef.current.getByteFrequencyData(array);
     const arraySum = array.reduce((a, value) => a + value, 0);
@@ -87,7 +87,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
 
     setSpeakerFhz(voiceVolume);
 
-  }, [speakerAnalyserRef.current,speakerMinOnRef.current])
+  }, [speakerAnalyserRef.current, speakerMinOnRef.current])
 
 
 
@@ -109,7 +109,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
     source.connect(analyser);
     analyser.connect(scriptProcessor);
     scriptProcessor.connect(audioContext.destination);
-    scriptProcessorRef.current.addEventListener('audioprocess',AudioProcess);
+    scriptProcessorRef.current.addEventListener('audioprocess', AudioProcess);
 
   }, [minOnRef.current]);
 
@@ -118,7 +118,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
   const startSpeakerFhz = useCallback(async (stream: MediaStream) => {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioContext.createMediaStreamSource(stream);
-    await audioContext.resume(); 
+    await audioContext.resume();
 
 
 
@@ -133,7 +133,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
     analyser.connect(scriptProcessor);
     scriptProcessor.connect(audioContext.destination);
     console.log('aaya')
-    speakerScriptProcessorRef.current.addEventListener('audioprocess',SpeackerProcess);
+    speakerScriptProcessorRef.current.addEventListener('audioprocess', SpeackerProcess);
 
   }, [speakerMinOnRef.current]);
 
@@ -159,20 +159,20 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
 
   useEffect(() => {
     getEnumerateDevice();
-  }, [getEnumerateDevice,audioPermisson,cameraPermisson]);
+  }, [getEnumerateDevice, audioPermisson, cameraPermisson]);
 
   useEffect(() => {
-    if(usermediaRef.current && usermediaRef.current.segmenter){
-      usermediaRef.current.blurBackground(usermediaRef.current.segmenter,isBlur ? 10 : 0);
+    if (usermediaRef.current && usermediaRef.current.segmenter) {
+      usermediaRef.current.blurBackground(usermediaRef.current.segmenter, isBlur ? 10 : 0);
     }
-  },[isBlur])
+  }, [isBlur])
 
   // Play the selected video device
   const playVideo = async (deviceId: string) => {
 
     try {
       if (!videoStart) {
-        usermediaRef.current = new UserMediaService(videoCanvasRef,canvasRef,isBlur);
+        usermediaRef.current = new UserMediaService(videoCanvasRef, canvasRef, isBlur);
         const videoTrack = await usermediaRef.current.getVideoTrack(deviceId);
 
         if (videoRef.current && videoTrack) {
@@ -212,7 +212,7 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
       } else {
         if (audioRef.current) {
           minOnRef.current = false;
-          scriptProcessorRef.current?.removeEventListener('audioprocess',AudioProcess);
+          scriptProcessorRef.current?.removeEventListener('audioprocess', AudioProcess);
           audioRef.current.pause();
           setAudioStart(false);
         }
@@ -234,8 +234,8 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
           speakerRef.current.play();
           setSpeakerStart(true);
           const stream = speakerRef.current.captureStream();
-         
-          if(stream){
+
+          if (stream) {
             startSpeakerFhz(stream as MediaStream);
           }
           speakerMinOnRef.current = true;
@@ -261,32 +261,30 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
 
 
   return (
-    <div
-      className={!isModile ? `w-[22rem] shadow-xl z-50 bg-white transition-all h-[90vh] ${open ? 'block' : 'hidden'
-        } py-4 px-4` : `absolute top-0 right-0 w-[22rem] shadow-xl z-50 h-[90vh] bg-white transition-all ${open ? 'translate-x-0' : 'translate-x-[100%]'
-        } py-4 px-4`}
-    >
-       <video ref={videoCanvasRef} style={{ display: "none" }}></video>
-       <canvas ref={canvasRef} width={640} height={480} style={{ display: "none" }}></canvas>
-      <h2 className="text-black/90 text-3xl font-bold mb-3">Einstellungen</h2>
+    <div>
+      <video ref={videoCanvasRef} style={{ display: "none" }}></video>
+      <canvas ref={canvasRef} width={640} height={480} style={{ display: "none" }}></canvas>
+      <h2 className="text-black text-[28px] font-bold mb-3">Einstellungen</h2>
 
       {/* Test your camera */}
-      <div className="w-[19rem] relative mb-5">
-        <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihrer Kamera</h3>
+      <div className="w-[20rem] relative mb-6">
+        <h3 className="text-[16px] text-black mb-3 font-semibold">Test Ihrer Kamera</h3>
+
+        <video ref={videoRef} className="w-full h-[12rem] bg-black rounded-md mb-3"></video>
         <div className="flex items-center mb-2">
           <button
             onClick={() => playVideo(selectedVideo || videoDevices[0]?.deviceId)}
-            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
+            className="py-2 px-4 bg-gray-200 text-black font-medium text-[14px] rounded "
           >
             {videoStart ? 'Stop' : 'Start'}
           </button>
           <select
-            className="ml-2 px-2 py-1 rounded text-sm w-full border"
+            className="ml-2 px-2 py-2 rounded text-sm w-full border outline-blue-500"
             value={selectedVideo || ''}
             onChange={(e) => setSelectedVideo(e.target.value)}
           >
             <option value="" disabled>
-              Select Camera
+              Camera Aukey
             </option>
             {videoDevices.map((device) => (
               <option key={device.deviceId} value={device.deviceId}>
@@ -295,64 +293,30 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
             ))}
           </select>
         </div>
-        <video ref={videoRef} className="w-[23rem] h-[12rem] bg-black rounded-md"></video>
       </div>
 
 
-      {/* Test your microphone */}
-      <div className="w-[19rem] relative mb-5">
-        <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihres Mikrofons</h3>
-        <div className="flex items-center mb-2">
-          <button
-            onClick={() => playAudio(selectedAudio || audioDevices[0]?.deviceId)}
-            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
-          >
-            {audioStart ? 'Stop' : 'Start'}
-          </button>
-          <select
-            className="ml-2 px-2 py-1 rounded text-sm w-full border"
-            value={selectedAudio || ''}
-            onChange={(e) => setSelectedAudio(e.target.value)}
-          >
-            <option value="" disabled>
-              Select Microphone
-            </option>
-            {audioDevices.map((device) => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Microphone ${device.deviceId}`}
-              </option>
-            ))}
-          </select>
-        </div>
-        <audio ref={audioRef} controls className="w-full hidden"></audio>
-        <div className="flex items-center">
-          <p className="text-sm text-black/70">Lautstärke</p>
-          <div className={`w-full bg-gray-200 h-[5px] rounded-md ml-2 relative overflow-hidden`}>
-            <div className={`bg-[#2B86FC] h-full`} style={{width: `${audioFhz}%`}}></div>
-          </div>
-          {/* <input type="range" className="ml-2 w-full remove-dot" min={0} max={100} step={1} onChange={handleVolume} value={audioFhz} /> */}
-        </div>
-      </div>
+      
 
       {/* Test audio output */}
-      <div className="w-[19rem] relative mb-5">
-        <h3 className="text-lg text-black/80 mb-2 font-bold">Test Ihrer Lautsprecher</h3>
+      <div className="w-[20rem] relative mb-6">
+        <h3 className="text-[16px] text-black mb-3 font-semibold">Test Ihrer Lautsprecher</h3>
         <div className="flex items-center mb-2">
           <button
             onClick={() => {
               changeOutputDevice(selectedOutput || outputDevices[0]?.deviceId);
             }}
-            className="py-1 px-4 bg-[#EEEEEE] text-black/80 font-normal rounded"
+            className="py-2 px-4 bg-gray-200 text-black font-medium text-[14px] rounded"
           >
             {speakerStart ? 'Stop' : 'Start'}
           </button>
           <select
-            className="ml-2 px-2 py-1 rounded text-sm w-full border"
+            className="ml-2 px-2 py-2 rounded text-sm w-full border outline-blue-500"
             value={selectedOutput || ''}
             onChange={(e) => setSelectedOutput(e.target.value)}
           >
             <option value="" disabled>
-              Select Output Device
+              Headset Earphone
             </option>
             {outputDevices.map((device) => (
               <option key={device.deviceId} value={device.deviceId}>
@@ -363,20 +327,60 @@ const TestingSidebar: React.FC<IProps> = ({ open, onClose, setIsBlur, isBlur, au
         </div>
         <audio ref={speakerRef} src='/babe.mp3' controls className="w-full hidden"></audio>
         <div className="flex items-center">
-          <p className="text-sm text-black/70">Lautstärke</p>
+          <p className="text-[14px] text-gray-400">Lautstärke</p>
           <div className={`w-full bg-gray-200 h-[5px] rounded-md ml-2 relative overflow-hidden`}>
-            <div className={`bg-[#2B86FC] h-full`} style={{width: `${speakerFhz}%`}}></div>
+            <div className={`bg-[#2B86FC] h-full`} style={{ width: `${speakerFhz}%` }}></div>
           </div>
-  
+
         </div>
 
       </div>
 
+
+
+      {/* Test your microphone */}
+      <div className="w-[20rem] relative mb-6">
+        <h3 className="text-[16px] text-black mb-3 font-semibold">Test Ihres Mikrofons</h3>
+        <div className="flex items-center mb-2">
+          <button
+            onClick={() => playAudio(selectedAudio || audioDevices[0]?.deviceId)}
+            className="py-2 px-4 bg-gray-200 text-black font-medium text-[14px] rounded"
+          >
+            {audioStart ? 'Stop' : 'Start'}
+          </button>
+          <select
+            className="ml-2 px-2 py-2 rounded text-sm w-full border outline-blue-500"
+            value={selectedAudio || ''}
+            onChange={(e) => setSelectedAudio(e.target.value)}
+          >
+            <option value="" disabled>
+              Microphone Aukey
+            </option>
+            {audioDevices.map((device) => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Microphone ${device.deviceId}`}
+              </option>
+            ))}
+          </select>
+        </div>
+        <audio ref={audioRef} controls className="w-full hidden"></audio>
+        <div className="flex items-center">
+          <p className="text-[14px] text-gray-400">Lautstärke</p>
+          <div className={`w-full bg-gray-200 h-[5px] rounded-md ml-2 relative overflow-hidden`}>
+            <div className={`bg-[#2B86FC] h-full`} style={{ width: `${audioFhz}%` }}></div>
+          </div>
+          {/* <input type="range" className="ml-2 w-full remove-dot" min={0} max={100} step={1} onChange={handleVolume} value={audioFhz} /> */}
+        </div>
+      </div>
+
       {/* Additional options */}
-      <div className="w-[19rem] mb-5">
-        <label className="flex items-center space-x-2">
-          <input type="checkbox" className="form-checkbox" checked={isBlur} onChange={() => setIsBlur(prev => !prev)} />
-          <span className="text-black/70">Hintergrund weichzeichnen</span>
+      <div className="w-[20rem] mb-5">
+        <h3 className="text-[16px] text-black mb-2 font-semibold">Test Ihrer Lautsprecher</h3>
+        <label className="flex items-center space-x-2 checkbox" htmlFor='checkbox'>
+
+          <input type="checkbox" id='checkbox' className="form-checkbox accent-blue-500 w-4 h-4 border-none bg-gray-500  hidden" checked={isBlur} onChange={() => setIsBlur(prev => !prev)} />
+          <span className="checkmark relative"></span>
+          <span className="text-gray-400 text-[14px]">Hintergrund weichzeichnen</span>
         </label>
       </div>
     </div>

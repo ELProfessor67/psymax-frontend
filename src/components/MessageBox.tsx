@@ -9,13 +9,13 @@ function getTime(date: Date) {
 }
 const MessageBox:React.FC<IUserMessage> = ({message,name,isMe,datetime}) => {
   return (
-    <div className='py-2 px-3 rounded-md  my-3'>
+    <div className='py-2 rounded-md  my-3'>
       <div className={`flex items-center gap-2 ${isMe ? 'justify-end': 'justify-start'}`}>
 
-        <h3 className='text-[#3C3C3C] text-[16px] font-semibold'>{name}</h3>
-        <span className='text-[#2B86FC] text-[12px] mt-1 font-semibold'>{datetime && getTime(datetime)}</span>
+        <h3 className='text-gray-700 text-[16px] font-semibold'>{name}</h3>
+        <span className='text-blue-500 text-[12px] mt-1 font-semibold'>{datetime && getTime(datetime)}</span>
       </div>
-        <p className={`text-[#707070] text-[16px] font-normal ${isMe ? 'text-right': 'text-left'}`}>{message}</p>
+        <p className={`text-[#707070] text-[16px] font-normal text-left mt-2`}>{message}</p>
     </div>
   )
 }

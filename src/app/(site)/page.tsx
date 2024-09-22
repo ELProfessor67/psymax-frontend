@@ -15,11 +15,10 @@ function generateRandomString() {
     return result;
   }
 
-  const part1 = 'u' + getRandomPart(2);  
-  const part2 = getRandomPart(3);        
-  const part3 = getRandomPart(3); 
+  const part2 = getRandomPart(3).toUpperCase();        
+  const part3 = getRandomPart(3).toUpperCase(); 
 
-  return `${part1}-${part2}-${part3}`;
+  return `${part2}${part3}`;
 }
 
 interface Iprops 
@@ -57,21 +56,21 @@ const page:FC<Iprops> = ({searchParams}) => {
       </div>
 
       <div className='max-w-lg mx-auto mt-40 font-semibold'>
-        <h3 className='text-[32px] text-center font-semibold'>Videosprechstunde</h3>
+        <h3 className='text-[32px] text-center font-semibold text-black'>Videosprechstunde</h3>
         <p className='text-[18px] text-center mt-5 font-medium'>Falls Sie noch keinen Zugangscode erhalten haben kontaktieren Sie bitte Ihre Behandler:in.</p>
 
         <form className='mt-8' onSubmit={handleJoin}>
 
-          <input type='text' className='px-3 py-4 border border-gray-300 rounded-md outline-none w-full placeholder:font-normal placeholder:text-[16px]' placeholder='Wie möchten Sie sich nennen?' required value={name} onChange={(e) => setName(e.target.value)} />
+          <input type='text' className='px-3 py-4 border border-gray-300 text-[16px] font-normal rounded-md outline-none w-full placeholder:font-normal placeholder:text-[16px]' placeholder='Wie möchten Sie sich nennen?' required value={name} onChange={(e) => setName(e.target.value)} />
 
 
           <div className='px-3 py-4 border border-gray-300 rounded-md flex items-center mt-5 '>
-            <input type='text' className='outline-none w-full placeholder:font-normal  placeholder:text-[16px]' value={room_id} onChange={(e) => setRoom_id(e.target.value)} placeholder='Wie lautet Ihr Zugangscode?' required />
+            <input type='text' className='outline-none w-full font-normal text-black placeholder:font-normal text-[16px]  placeholder:text-[16px]' maxLength={6} value={room_id} onChange={(e) => setRoom_id(e.target.value)} placeholder='Wie lautet Ihr Zugangscode?' required />
             <button className='text-black/80 ml-2' type='button' onClick={handleGenerate}><GrPowerReset /></button>
           </div>
 
 
-          <button className='text-center w-full py-4 px-3 bg-gray-200 text-black text-[16px] rounded-md mt-5' type='submit'>Beitreten</button>
+          <button className='text-center w-full py-4 px-3 bg-gray-200 text-black text-[16px] font-medium rounded-md mt-5' type='submit'>Beitreten</button>
         </form>
       </div>
     </section>

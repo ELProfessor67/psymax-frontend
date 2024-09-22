@@ -44,7 +44,7 @@ let params = {
 
 
 
-const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicMute:boolean,videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur:boolean,isScreenShare:boolean,setSuperForceRender:React.Dispatch<React.SetStateAction<number>>,setPermisstionOpen:Dispatch<SetStateAction<boolean>>,setIsScreenShare:Dispatch<SetStateAction<boolean>>) => {
+const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicMute:boolean,videoCanvasRef:MutableRefObject<HTMLVideoElement | null>,canvasRef:MutableRefObject<HTMLCanvasElement | null>,isBlur:boolean,isScreenShare:boolean,setSuperForceRender:React.Dispatch<React.SetStateAction<number>>,setPermisstionOpen:Dispatch<SetStateAction<boolean>>,setIsScreenShare:Dispatch<SetStateAction<boolean>>, setSelected:Dispatch<SetStateAction<number>>) => {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [, forceRender] = useState(false);
 
@@ -145,7 +145,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
       const { track } = consumer;
 
       const participantRef:ParticipantService | undefined = participantsRef.current.find((perticipant:ParticipantService) => perticipant.socketId == socketId);
-      
+     
       
 
       if(participantRef){
@@ -161,6 +161,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
         } else {
           console.log('track aaya',track)
           participantRef.videoTrack = track;
+          
           if(remoteVideoTracksRef.current[socketId]){
             delete remoteVideoTracksRef.current[socketId];
           }
@@ -171,6 +172,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
               console.error('Error attempting to play the media:', error);
             });
           }
+          
         }
       }
       console.log('audio',audiosElementRef.current[socketId])
@@ -457,7 +459,8 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
 
 
     const handleScreenShare = useCallback(async (type:'share' | 'unshare') => {
-      const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketIdRef.current);
+      const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketIdRef.current); 
+      const participantIndex = participantsRef.current.findIndex((participant: ParticipantService) => participant.socketId == socketIdRef.current); 
       if(type == 'share' && usermediaRef.current){
         
         displayTrackRef.current = await usermediaRef.current.getDisplayTrack();
@@ -465,6 +468,9 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
           setIsScreenShare(false);
           return
         }
+
+        displayTrackRef.current.onended = () => handleScreenShare('unshare');
+
         displayParamsRef.current = { track: displayTrackRef.current, ...params };
         ProduceTrack('video',displayProducerRef,displayParamsRef);
         
@@ -473,6 +479,7 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
           participant.isWebCamMute = true;
         }
         socketRef.current?.emit(MUTE_UNMUTE,{value:false,type:'cam',socketId: socketIdRef.current});
+        setSelected(participantIndex);
       }else{
 
         displayTrackRef.current = null;
@@ -481,6 +488,8 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
           participant.isShareScreen = false;
         }
         socketRef.current?.emit(MUTE_UNMUTE,{value:true,type:'cam',socketId: socketIdRef.current});
+        setIsScreenShare
+        setIsScreenShare(false)
       }
 
       forceRender(prev => !prev);
@@ -528,11 +537,20 @@ const useSocket = (room_id: string, username: string,isWebCamMute:boolean,isMicM
       socketRef.current?.on(MUTE_UNMUTE,({value,type,socketId}) => {
         console.log(value,type,socketId)
         const participant = participantsRef.current.find((participant: ParticipantService) => participant.socketId == socketId);
+        const participantIndex = participantsRef.current.findIndex((participant: ParticipantService) => participant.socketId == socketId);
+        const myIndex = participantsRef.current.findIndex((participant: ParticipantService) => participant.socketId == socketIdRef.current);
+
+
         if(participant){
           if(type == 'mic'){
             participant.isMicMute = value;
           }else{
             participant.isWebCamMute = value;
+            if(!value){
+              setSelected(participantIndex);
+            }else{
+              setSelected(myIndex);
+            }
           }
         }
         forceRender(prev => !prev);

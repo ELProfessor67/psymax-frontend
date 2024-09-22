@@ -53,19 +53,17 @@ const RenderParticipants:FC<IProps> = ({socketId,name,videosElementsRef,audiosEl
     }
   },[socketId,socketIdRef.current,videoTrackRef.current,superForceRender])
 
-
-
   return (
-    <div className={`w-[20rem] max-h-[15rem] md:w-full md:h-[20rem] bg-[#3C3C3C] shadow-xl rounded-md flex items-center justify-center ${selected == index ? 'hidden' : 'block'} relative`} onClick={onClick}>
-        
+    <div className={`w-[30rem] mx-2 my-[2px] md:mx-0 h-[10rem] md:w-full md:h-[20rem] bg-[#242424] shadow-xl rounded-xl flex items-center justify-center ${(selected === index && !(socketId == socketIdRef.current && isShareScreen)) ? "hidden": "block"} relative`} onClick={onClick}>
 
         <video autoPlay ref={setVideoRefs} className={`absolute top left-0 right-0 bottom-0 object-cover z-0 w-full h-full ${!isWebCamMute || isShareScreen ? 'block': 'hidden'}`}></video>
         
-        <h1 className={`text-2xl font-semibold text-white z-10`}>{name}</h1>
+        <h1 className={`text-2xl font-semibold text-white z-10 select-none`}>{name}</h1>
         <audio ref={setAudioRefs} autoPlay></audio>
     
     </div>
   )
+  
 }
 
 export default RenderParticipants
